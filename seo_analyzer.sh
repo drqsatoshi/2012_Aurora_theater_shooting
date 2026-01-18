@@ -116,11 +116,21 @@ SIZE_KB=$((SIZE / 1024))
 echo "Load time: ${LOAD_TIME}s" | tee -a "$REPORT"
 echo "Page size: ${SIZE_KB} KB" | tee -a "$REPORT"
 
-LOAD_TIME_INT=${LOAD_TIME%.*}
-if [ "$LOAD_TIME_INT" -le 3 ]; then
-    echo "✅ Fast load time (< 3 seconds)" | tee -a "$REPORT"
+# Use bc for proper decimal comparison
+if command -v bc &> /dev/null; then
+    if (( $(echo "$LOAD_TIME < 3" | bc -l) )); then
+        echo "✅ Fast load time (< 3 seconds)" | tee -a "$REPORT"
+    else
+        echo "⚠️  Slow load time (optimize for < 3 seconds)" | tee -a "$REPORT"
+    fi
 else
-    echo "⚠️  Slow load time (optimize for < 3 seconds)" | tee -a "$REPORT"
+    # Fallback: convert to milliseconds for integer comparison
+    LOAD_TIME_MS=$(echo "$LOAD_TIME * 1000" | awk '{print int($1)}')
+    if [ "$LOAD_TIME_MS" -lt 3000 ]; then
+        echo "✅ Fast load time (< 3 seconds)" | tee -a "$REPORT"
+    else
+        echo "⚠️  Slow load time (optimize for < 3 seconds)" | tee -a "$REPORT"
+    fi
 fi
 
 # 7. Links Analysis
@@ -130,9 +140,9 @@ TOTAL_LINKS=$(curl -s "$URL" | grep -oP '<a href="[^"]*"' | wc -l)
 echo "Total links: $TOTAL_LINKS" | tee -a "$REPORT"
 
 if [ $TOTAL_LINKS -ge 10 ]; then
-    echo "✅ Good number of internal links" | tee -a "$REPORT"
+    echo "✅ Good number of links" | tee -a "$REPORT"
 else
-    echo "⚠️  Consider adding more internal links" | tee -a "$REPORT"
+    echo "⚠️  Consider adding more links for better navigation" | tee -a "$REPORT"
 fi
 
 # 8. Image Optimization
@@ -206,7 +216,15 @@ MAX_SCORE=12
 [ -n "$META_DESC" ] && SCORE=$((SCORE + 1))
 [ "$H1_COUNT" = "1" ] && SCORE=$((SCORE + 1))
 [ $WORD_COUNT -ge 1500 ] && SCORE=$((SCORE + 1))
-[ "$LOAD_TIME_INT" -le 3 ] && SCORE=$((SCORE + 1))
+
+# Check load time (handle both bc and fallback)
+if command -v bc &> /dev/null; then
+    (( $(echo "$LOAD_TIME < 3" | bc -l) )) && SCORE=$((SCORE + 1))
+else
+    LOAD_TIME_MS=$(echo "$LOAD_TIME * 1000" | awk '{print int($1)}')
+    [ "$LOAD_TIME_MS" -lt 3000 ] && SCORE=$((SCORE + 1))
+fi
+
 [ $TOTAL_LINKS -ge 10 ] && SCORE=$((SCORE + 1))
 [ $IMG_COUNT -eq $IMG_WITH_ALT ] && SCORE=$((SCORE + 1))
 [ -n "$VIEWPORT" ] && SCORE=$((SCORE + 1))

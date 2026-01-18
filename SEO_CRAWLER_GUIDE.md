@@ -57,13 +57,15 @@ cat > sitemap.xml << 'EOF'
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://grokipedia.com/page/2012_Aurora_theater_shooting</loc>
-    <lastmod>2026-01-18</lastmod>
+    <lastmod>YYYY-MM-DD</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 </urlset>
 EOF
 ```
+
+**Note:** Update `YYYY-MM-DD` with the current date or use `$(date +%Y-%m-%d)` for dynamic generation.
 
 ---
 
@@ -92,13 +94,13 @@ curl -A "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)
 ### Test Spider Crawl
 
 ```bash
-# Install wget for spider crawling
-# wget --spider --user-agent="Mozilla/5.0 (compatible; Googlebot/2.1)" \
-#   https://grokipedia.com/page/2012_Aurora_theater_shooting
-
-# Recursive spider crawl (test only - be respectful)
+# Recursive spider crawl with wget (test only - be respectful of server resources)
 wget --spider -r -l 2 --user-agent="SEO-Spider/1.0" \
   https://grokipedia.com/page/2012_Aurora_theater_shooting 2>&1 | tee spider_log.txt
+
+# Alternative: Use curl to check link validity
+curl -I --user-agent="SEO-Spider/1.0" \
+  https://grokipedia.com/page/2012_Aurora_theater_shooting
 ```
 
 ---
