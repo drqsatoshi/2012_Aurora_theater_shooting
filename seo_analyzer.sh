@@ -6,6 +6,7 @@
 
 # Default configuration
 DEFAULT_CONFIG="config.json"
+CONFIG_FILE=""
 URL=""
 ARTICLE_NAME=""
 
