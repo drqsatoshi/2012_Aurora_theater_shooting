@@ -1,7 +1,6 @@
 // Puppeteer scraping script for Grokipedia pages
 // Usage: node scrape.js [URL] [--config=path/to/config.json]
 
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,6 +22,9 @@ function loadConfig() {
 }
 
 async function scrapeGrokipedia(customUrl = null) {
+  // Lazy load puppeteer only when needed
+  const puppeteer = require('puppeteer');
+  
   const config = loadConfig();
   const url = customUrl || process.argv[2] || config.url;
   
@@ -41,7 +43,6 @@ async function scrapeGrokipedia(customUrl = null) {
     const html = await page.content();
     
     // Save to configured output file
-    const config = loadConfig();
     const outputFile = config.scrapeOutput || 'scrape.html';
     fs.writeFileSync(outputFile, html, 'utf8');
     console.log(`Content saved to ${outputFile}`);
@@ -71,6 +72,45 @@ async function scrapeGrokipedia(customUrl = null) {
 
 // Run if called directly
 if (require.main === module) {
+  // Check for help flag
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+Grokipedia Scraper - Universal tool for scraping any Grokipedia/Wikipedia article
+
+Usage:
+  node scrape.js [URL] [--config=path/to/config.json]
+
+Examples:
+  # Use default config.json
+  node scrape.js
+
+  # Scrape a specific URL
+  node scrape.js https://grokipedia.com/page/Albert_Einstein
+
+  # Use a custom config file
+  node scrape.js --config=examples/albert_einstein_config.json
+
+  # Scrape specific URL with custom config
+  node scrape.js https://grokipedia.com/page/Marie_Curie --config=myconfig.json
+
+Options:
+  --config=PATH    Path to configuration file (default: config.json)
+  --help, -h       Show this help message
+
+Configuration (config.json):
+  {
+    "url": "https://grokipedia.com/page/ARTICLE_NAME",
+    "articleName": "Article Display Name",
+    "outputDir": "seo_reports",
+    "scrapeOutput": "scrape.html"
+  }
+
+For more information, see README.md
+`);
+    process.exit(0);
+  }
+  
   scrapeGrokipedia().catch(console.error);
 }
 
