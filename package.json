@@ -1,0 +1,21 @@
+{
+  "name": "2012_aurora_theater_shooting",
+  "version": "1.0.0",
+  "description": "Grokipedia scraper for 2012 Aurora theater shooting page",
+  "main": "scrape.js",
+  "scripts": {
+    "scrape": "node scrape.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "grokipedia",
+    "scraper",
+    "2012-aurora-shooting",
+    "seo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}
