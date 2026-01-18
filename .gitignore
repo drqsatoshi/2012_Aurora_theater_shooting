@@ -2,3 +2,11 @@ node_modules/
 package-lock.json
 *.log
 .DS_Store
+seo_reports/
+googlebot_view.html
+bingbot_view.html
+mobile_view.html
+spider_log.txt
+crawl_report.sh
+structured_data.json
+crawl_report_*.txt
