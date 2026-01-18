@@ -1,9 +1,9 @@
-# 2012_Aurora_theater_shooting
+# Grokipedia SEO Tool
 
-Grokipedia URL: https://grokipedia.com/page/2012_Aurora_theater_shooting
+A universal tool for scraping and analyzing any Grokipedia or Wikipedia article for SEO optimization. Designed for use by humans and AI agents (like GitHub Copilot or Grok) to help articles rank on the first page of search results.
 
 ## Purpose
-This repository contains tools for scraping and analyzing the Grokipedia page about the 2012 Aurora theater shooting. The scrape.html file is used for testing and SEO optimization purposes to help the page rank on the first page alongside Wikipedia.
+This repository contains tools for scraping and analyzing Grokipedia pages. The tool helps optimize pages for search engine ranking through comprehensive SEO analysis and crawler testing.
 
 ## Quick Start
 
@@ -12,14 +12,35 @@ This repository contains tools for scraping and analyzing the Grokipedia page ab
 npm install
 ```
 
-### 2. Scrape Grokipedia Content
-```bash
-npm run scrape
+### 2. Configure Your Article
+Edit `config.json` to set your target article:
+```json
+{
+  "url": "https://grokipedia.com/page/YOUR_ARTICLE_NAME",
+  "articleName": "Your Article Name",
+  "outputDir": "seo_reports",
+  "scrapeOutput": "scrape.html"
+}
 ```
 
-### 3. Run SEO Analysis
+Or use command-line arguments (see Usage section below).
+
+### 3. Scrape Grokipedia Content
 ```bash
-./seo_analyzer.sh
+# Use config.json
+npm run scrape
+
+# Or specify URL directly
+node scrape.js https://grokipedia.com/page/YOUR_ARTICLE_NAME
+```
+
+### 4. Run SEO Analysis
+```bash
+# Use config.json
+npm run analyze
+
+# Or specify URL directly
+./seo_analyzer.sh https://grokipedia.com/page/YOUR_ARTICLE_NAME
 ```
 
 This will:
@@ -27,6 +48,57 @@ This will:
 - Test crawler compatibility (Googlebot, Bingbot)
 - Generate comprehensive SEO report
 - Provide optimization recommendations
+
+## Usage
+
+### Method 1: Using Configuration File (Recommended)
+
+1. Edit `config.json`:
+```json
+{
+  "url": "https://grokipedia.com/page/Albert_Einstein",
+  "articleName": "Albert Einstein",
+  "outputDir": "seo_reports",
+  "scrapeOutput": "scrape.html"
+}
+```
+
+2. Run the tools:
+```bash
+npm run scrape
+npm run analyze
+```
+
+### Method 2: Command-Line Arguments
+
+Scrape any article:
+```bash
+node scrape.js https://grokipedia.com/page/Albert_Einstein
+node scrape.js https://grokipedia.com/page/World_War_II
+node scrape.js https://en.wikipedia.org/wiki/Quantum_mechanics
+```
+
+Analyze any URL:
+```bash
+./seo_analyzer.sh https://grokipedia.com/page/Albert_Einstein
+./seo_analyzer.sh https://grokipedia.com/page/World_War_II
+```
+
+### Example: Different Articles
+
+```bash
+# Scrape and analyze a science article
+node scrape.js https://grokipedia.com/page/Quantum_mechanics
+./seo_analyzer.sh https://grokipedia.com/page/Quantum_mechanics
+
+# Scrape and analyze a historical event
+node scrape.js https://grokipedia.com/page/Moon_landing
+./seo_analyzer.sh https://grokipedia.com/page/Moon_landing
+
+# Scrape and analyze a biography
+node scrape.js https://grokipedia.com/page/Marie_Curie
+./seo_analyzer.sh https://grokipedia.com/page/Marie_Curie
+```
 
 ## SEO & Crawler Optimization
 
@@ -38,47 +110,55 @@ See **[SEO_CRAWLER_GUIDE.md](SEO_CRAWLER_GUIDE.md)** for comprehensive documenta
 
 ### Quick SEO Commands
 
+Replace `YOUR_ARTICLE_URL` with your target article:
+
 ```bash
 # Test as Googlebot
 curl -A "Mozilla/5.0 (compatible; Googlebot/2.1)" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting > googlebot_test.html
+  YOUR_ARTICLE_URL > googlebot_test.html
 
 # Analyze SEO elements
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s YOUR_ARTICLE_URL | \
   grep -E "<title>|<meta name=\"description\"|<h1" | head -10
 
 # Check page speed
-time curl -o /dev/null -s https://grokipedia.com/page/2012_Aurora_theater_shooting
+time curl -o /dev/null -s YOUR_ARTICLE_URL
 ```
 
 ## Usage
 
 ### Scraping with curl
 ```bash
-curl https://grokipedia.com/page/2012_Aurora_theater_shooting > scrape.html
+# Replace YOUR_ARTICLE_NAME with your target article
+curl https://grokipedia.com/page/YOUR_ARTICLE_NAME > scrape.html
 ```
 
 Or extract specific elements:
 ```bash
-curl https://grokipedia.com/page/2012_Aurora_theater_shooting 2>/dev/null | \
+curl https://grokipedia.com/page/YOUR_ARTICLE_NAME 2>/dev/null | \
   grep -oP '(?<=<p[^>]*>).*?(?=</p>)'
 ```
 
 ### Using Puppeteer Script
 ```bash
+# Use config.json
 node scrape.js
+
+# Or specify URL directly
+node scrape.js https://grokipedia.com/page/YOUR_ARTICLE_NAME
 ```
 
 ## Files
 
 ### Core Files
-- `scrape.js` - Puppeteer script to scrape Grokipedia page
+- `scrape.js` - Puppeteer script to scrape any Grokipedia/Wikipedia page
 - `scrape.html` - Template/output file for scraped content
+- `config.json` - Configuration file for article URL and settings
 - `package.json` - Node.js dependencies
 
 ### SEO Tools
 - `SEO_CRAWLER_GUIDE.md` - Comprehensive SEO and crawler optimization guide
-- `seo_analyzer.sh` - Automated SEO analysis script
+- `seo_analyzer.sh` - Automated SEO analysis script (works with any URL)
 - `seo_reports/` - Generated SEO analysis reports (gitignored)
 
 ### Configuration
@@ -103,11 +183,17 @@ The SEO analyzer checks:
 
 ## URL Namespace
 
-The namespace has been updated from `2012_Aurora_shooting` to `2012_Aurora_theater_shooting` to match the repository name and improve SEO alignment with Wikipedia and other sources.
+The tool is designed to work with any Grokipedia or Wikipedia article. Simply configure the URL in `config.json` or pass it as a command-line argument. The repository name references a specific article but the tool itself is universal.
+
+## Default Configuration
+
+The tool comes pre-configured with the 2012 Aurora theater shooting article as a default example:
+- URL: `https://grokipedia.com/page/2012_Aurora_theater_shooting`
+- This is just a default - you can analyze any article by changing `config.json` or using command-line arguments
 
 ## Contributing to First-Page Ranking
 
-To help the Grokipedia article rank on the first page:
+To help any Grokipedia article rank on the first page:
 
 1. **Content Quality**: Ensure 1500+ words of unique, well-researched content
 2. **Technical SEO**: Fast load times, mobile-responsive, HTTPS enabled
@@ -116,7 +202,22 @@ To help the Grokipedia article rank on the first page:
 5. **Regular Updates**: Keep content fresh with recent information
 6. **Backlinks**: Build quality backlinks from reputable sources
 
-Run `./seo_analyzer.sh` regularly to monitor SEO score and identify improvements.
+Run `./seo_analyzer.sh YOUR_ARTICLE_URL` regularly to monitor SEO score and identify improvements.
+
+## AI Agent Integration
+
+This tool is designed to be used by AI agents like GitHub Copilot or Grok:
+
+1. **Configure**: Set the target article in `config.json`
+2. **Analyze**: Run `npm run analyze` to get SEO insights
+3. **Optimize**: Use the recommendations to improve content and structure
+4. **Monitor**: Re-run analysis after changes to track improvements
+
+AI agents can use this tool to:
+- Automatically analyze multiple articles
+- Generate SEO reports for comparison
+- Identify optimization opportunities
+- Track ranking improvements over time
 
 ## Resources
 

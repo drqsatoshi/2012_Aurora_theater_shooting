@@ -1,9 +1,50 @@
 #!/bin/bash
 
 # SEO Crawler Analysis Script
-# This script analyzes the Grokipedia page for SEO optimization
+# This script analyzes Grokipedia pages for SEO optimization
+# Usage: ./seo_analyzer.sh [URL] [--config=path/to/config.json]
 
-URL="https://grokipedia.com/page/2012_Aurora_theater_shooting"
+# Default configuration
+DEFAULT_CONFIG="config.json"
+URL=""
+ARTICLE_NAME=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --config=*)
+      CONFIG_FILE="${1#*=}"
+      shift
+      ;;
+    *)
+      if [ -z "$URL" ]; then
+        URL="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+# Load configuration from config.json if exists
+if [ -z "$URL" ] && [ -f "$DEFAULT_CONFIG" ]; then
+  # Use jq if available, otherwise use basic grep/sed
+  if command -v jq &> /dev/null; then
+    URL=$(jq -r '.url // empty' "$DEFAULT_CONFIG" 2>/dev/null)
+    ARTICLE_NAME=$(jq -r '.articleName // empty' "$DEFAULT_CONFIG" 2>/dev/null)
+  else
+    # Fallback: basic parsing
+    URL=$(grep -oP '"url"\s*:\s*"\K[^"]*' "$DEFAULT_CONFIG" | head -1)
+    ARTICLE_NAME=$(grep -oP '"articleName"\s*:\s*"\K[^"]*' "$DEFAULT_CONFIG" | head -1)
+  fi
+fi
+
+# Fallback to default URL if not provided
+if [ -z "$URL" ]; then
+  URL="https://grokipedia.com/page/2012_Aurora_theater_shooting"
+  echo "⚠️  No URL provided. Using default: $URL"
+  echo "   Usage: ./seo_analyzer.sh <URL> or configure in config.json"
+  echo ""
+fi
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 REPORT_DIR="seo_reports"
 REPORT="${REPORT_DIR}/crawl_report_${TIMESTAMP}.txt"

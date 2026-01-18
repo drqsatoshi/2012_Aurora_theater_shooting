@@ -1,11 +1,30 @@
 // Puppeteer scraping script for Grokipedia pages
-// Usage: node scrape.js
+// Usage: node scrape.js [URL] [--config=path/to/config.json]
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const path = require('path');
 
-async function scrapeGrokipedia() {
-  const url = 'https://grokipedia.com/page/2012_Aurora_theater_shooting';
+// Load configuration
+function loadConfig() {
+  const args = process.argv.slice(2);
+  const configArg = args.find(arg => arg.startsWith('--config='));
+  const configPath = configArg 
+    ? configArg.split('=')[1] 
+    : path.join(__dirname, 'config.json');
+  
+  if (fs.existsSync(configPath)) {
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  }
+  return {
+    url: 'https://grokipedia.com/page/2012_Aurora_theater_shooting',
+    scrapeOutput: 'scrape.html'
+  };
+}
+
+async function scrapeGrokipedia(customUrl = null) {
+  const config = loadConfig();
+  const url = customUrl || process.argv[2] || config.url;
   
   console.log(`Scraping: ${url}`);
   
@@ -21,9 +40,11 @@ async function scrapeGrokipedia() {
     // Get the full HTML content
     const html = await page.content();
     
-    // Save to scrape.html
-    fs.writeFileSync('scrape.html', html, 'utf8');
-    console.log('Content saved to scrape.html');
+    // Save to configured output file
+    const config = loadConfig();
+    const outputFile = config.scrapeOutput || 'scrape.html';
+    fs.writeFileSync(outputFile, html, 'utf8');
+    console.log(`Content saved to ${outputFile}`);
     
     // Extract key elements for analysis
     const data = await page.evaluate(() => {
