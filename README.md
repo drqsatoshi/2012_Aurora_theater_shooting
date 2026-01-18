@@ -86,6 +86,23 @@ Analyze any URL:
 
 ### Example: Different Articles
 
+The `examples/` directory contains pre-configured settings for different articles:
+
+```bash
+# Use an example configuration
+cp examples/albert_einstein_config.json config.json
+npm run scrape
+npm run analyze
+
+# Or use them directly
+node scrape.js --config=examples/world_war_ii_config.json
+./seo_analyzer.sh --config=examples/quantum_mechanics_config.json
+```
+
+See [examples/README.md](examples/README.md) for more details.
+
+Quick examples using direct URLs:
+
 ```bash
 # Scrape and analyze a science article
 node scrape.js https://grokipedia.com/page/Quantum_mechanics
@@ -147,6 +164,37 @@ node scrape.js
 # Or specify URL directly
 node scrape.js https://grokipedia.com/page/YOUR_ARTICLE_NAME
 ```
+
+## Configuration
+
+The `config.json` file controls the default behavior of the tool:
+
+```json
+{
+  "url": "https://grokipedia.com/page/2012_Aurora_theater_shooting",
+  "articleName": "2012 Aurora Theater Shooting",
+  "outputDir": "seo_reports",
+  "scrapeOutput": "scrape.html"
+}
+```
+
+### Configuration Options
+
+- **url**: The Grokipedia or Wikipedia article URL to analyze
+- **articleName**: Human-readable name for the article (used in reports)
+- **outputDir**: Directory where SEO analysis reports are saved (default: `seo_reports`)
+- **scrapeOutput**: Filename for scraped HTML content (default: `scrape.html`)
+
+### Priority Order
+
+The tool uses this priority for determining which URL to use:
+
+1. Command-line argument (highest priority)
+2. Config file specified with `--config=path/to/config.json`
+3. Default `config.json` in the root directory
+4. Fallback to hardcoded default URL (lowest priority)
+
+This allows maximum flexibility for different use cases.
 
 ## Files
 
