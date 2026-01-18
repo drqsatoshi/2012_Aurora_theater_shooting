@@ -26,15 +26,20 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Load configuration from config.json if exists
-if [ -z "$URL" ] && [ -f "$DEFAULT_CONFIG" ]; then
-  # Use jq if available, otherwise use basic grep/sed
-  if command -v jq &> /dev/null; then
-    URL=$(jq -r '.url // empty' "$DEFAULT_CONFIG" 2>/dev/null)
-    ARTICLE_NAME=$(jq -r '.articleName // empty' "$DEFAULT_CONFIG" 2>/dev/null)
-  else
-    # Fallback: basic parsing
-    URL=$(grep -oP '"url"\s*:\s*"\K[^"]*' "$DEFAULT_CONFIG" | head -1)
-    ARTICLE_NAME=$(grep -oP '"articleName"\s*:\s*"\K[^"]*' "$DEFAULT_CONFIG" | head -1)
+if [ -z "$URL" ]; then
+  # Use custom config if provided, otherwise use default
+  CONFIG_TO_USE="${CONFIG_FILE:-$DEFAULT_CONFIG}"
+  
+  if [ -f "$CONFIG_TO_USE" ]; then
+    # Use jq if available, otherwise use basic grep/sed
+    if command -v jq &> /dev/null; then
+      URL=$(jq -r '.url // empty' "$CONFIG_TO_USE" 2>/dev/null)
+      ARTICLE_NAME=$(jq -r '.articleName // empty' "$CONFIG_TO_USE" 2>/dev/null)
+    else
+      # Fallback: basic parsing
+      URL=$(grep -oP '"url"\s*:\s*"\K[^"]*' "$CONFIG_TO_USE" | head -1)
+      ARTICLE_NAME=$(grep -oP '"articleName"\s*:\s*"\K[^"]*' "$CONFIG_TO_USE" | head -1)
+    fi
   fi
 fi
 

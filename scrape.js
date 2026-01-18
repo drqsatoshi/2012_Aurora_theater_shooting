@@ -26,7 +26,9 @@ async function scrapeGrokipedia(customUrl = null) {
   const puppeteer = require('puppeteer');
   
   const config = loadConfig();
-  const url = customUrl || process.argv[2] || config.url;
+  // Priority: customUrl parameter > command-line arg > config > fallback
+  const urlArg = process.argv.find(arg => !arg.startsWith('--') && arg !== process.argv[0] && arg !== process.argv[1]);
+  const url = customUrl || urlArg || config.url;
   
   console.log(`Scraping: ${url}`);
   
