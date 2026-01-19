@@ -10,3 +10,7 @@ spider_log.txt
 crawl_report.sh
 structured_data.json
 crawl_report_*.txt
+scrape_*.html
+scrape_*.png
+scrape_wayback.html
+examples/*.html
