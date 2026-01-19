@@ -21,6 +21,31 @@ function loadConfig() {
   };
 }
 
+// Get the latest Wayback Machine snapshot URL for a given URL
+async function getWaybackUrl(originalUrl) {
+  const https = require('https');
+  const availabilityUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(originalUrl)}`;
+  
+  return new Promise((resolve, reject) => {
+    https.get(availabilityUrl, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (json.archived_snapshots && json.archived_snapshots.closest && json.archived_snapshots.closest.available) {
+            resolve(json.archived_snapshots.closest.url);
+          } else {
+            resolve(null);
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
 async function scrapeGrokipedia(customUrl = null) {
   // Lazy load puppeteer only when needed
   const puppeteer = require('puppeteer');
@@ -28,9 +53,9 @@ async function scrapeGrokipedia(customUrl = null) {
   const config = loadConfig();
   // Priority: customUrl parameter > command-line arg > config > fallback
   const urlArg = process.argv.find(arg => !arg.startsWith('--') && arg !== process.argv[0] && arg !== process.argv[1]);
-  const url = customUrl || urlArg || config.url;
+  const originalUrl = customUrl || urlArg || config.url;
   
-  console.log(`Scraping: ${url}`);
+  console.log(`Scraping: ${originalUrl}`);
   
   const browser = await puppeteer.launch({
     headless: true,
@@ -39,34 +64,104 @@ async function scrapeGrokipedia(customUrl = null) {
   
   try {
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    let html = null;
+    let scrapedUrl = originalUrl;
+    let scrapeMethod = 'direct';
     
-    // Get the full HTML content
-    const html = await page.content();
+    // Try direct access first
+    try {
+      console.log('Attempting direct access...');
+      await page.goto(originalUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      html = await page.content();
+      console.log('✓ Direct access successful');
+    } catch (directError) {
+      console.warn(`⚠ Direct access failed: ${directError.message}`);
+      
+      // Try Wayback Machine
+      try {
+        console.log('Attempting to fetch from Wayback Machine...');
+        const waybackUrl = await getWaybackUrl(originalUrl);
+        if (waybackUrl) {
+          console.log(`Found archived version: ${waybackUrl}`);
+          await page.goto(waybackUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+          html = await page.content();
+          scrapedUrl = waybackUrl;
+          scrapeMethod = 'wayback';
+          console.log('✓ Wayback Machine access successful');
+        } else {
+          throw new Error('No archived version found');
+        }
+      } catch (waybackError) {
+        console.warn(`⚠ Wayback Machine failed: ${waybackError.message}`);
+        
+        // Fall back to screenshot
+        console.log('Falling back to screenshot...');
+        try {
+          await page.goto(originalUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {
+            // Ignore navigation errors for screenshot
+          });
+          
+          const screenshotPath = config.scrapeOutput ? 
+            config.scrapeOutput.replace('.html', '_screenshot.png') : 
+            'scrape_screenshot.png';
+          
+          await page.screenshot({ 
+            path: screenshotPath,
+            fullPage: true 
+          });
+          
+          scrapeMethod = 'screenshot';
+          console.log(`✓ Screenshot saved to ${screenshotPath}`);
+          
+          // Create minimal HTML pointing to screenshot
+          html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Screenshot of ${originalUrl}</title>
+</head>
+<body>
+  <h1>Content captured via screenshot</h1>
+  <p>Original URL: <a href="${originalUrl}">${originalUrl}</a></p>
+  <p>Screenshot saved to: ${screenshotPath}</p>
+  <p>The page could not be scraped directly due to firewall/paywall restrictions.</p>
+  <img src="${screenshotPath}" alt="Screenshot of page" style="max-width: 100%; border: 1px solid #ccc;">
+</body>
+</html>`;
+        } catch (screenshotError) {
+          throw new Error(`All scraping methods failed. Last error: ${screenshotError.message}`);
+        }
+      }
+    }
     
     // Save to configured output file
     const outputFile = config.scrapeOutput || 'scrape.html';
     fs.writeFileSync(outputFile, html, 'utf8');
-    console.log(`Content saved to ${outputFile}`);
+    console.log(`\n✓ Content saved to ${outputFile}`);
+    console.log(`  Method used: ${scrapeMethod}`);
+    console.log(`  Source URL: ${scrapedUrl}`);
     
-    // Extract key elements for analysis
-    const data = await page.evaluate(() => {
-      const title = document.querySelector('h1')?.textContent || 'No title found';
-      const paragraphs = Array.from(document.querySelectorAll('p')).map(p => p.textContent.trim());
-      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6')).map(h => ({
-        tag: h.tagName,
-        text: h.textContent.trim()
-      }));
+    // Extract key elements for analysis (skip for screenshot-only)
+    if (scrapeMethod !== 'screenshot') {
+      const data = await page.evaluate(() => {
+        const title = document.querySelector('h1')?.textContent || 'No title found';
+        const paragraphs = Array.from(document.querySelectorAll('p')).map(p => p.textContent.trim());
+        const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6')).map(h => ({
+          tag: h.tagName,
+          text: h.textContent.trim()
+        }));
+        
+        return { title, paragraphs, headings };
+      });
       
-      return { title, paragraphs, headings };
-    });
-    
-    console.log('\nPage Title:', data.title);
-    console.log('\nFound', data.paragraphs.length, 'paragraphs');
-    console.log('Found', data.headings.length, 'headings');
+      console.log('\nPage Title:', data.title);
+      console.log('Found', data.paragraphs.length, 'paragraphs');
+      console.log('Found', data.headings.length, 'headings');
+    }
     
   } catch (error) {
-    console.error('Error scraping page:', error.message);
+    console.error('✗ Error scraping page:', error.message);
+    throw error;
   } finally {
     await browser.close();
   }
@@ -82,6 +177,11 @@ Grokipedia Scraper - Universal tool for scraping any Grokipedia/Wikipedia articl
 
 Usage:
   node scrape.js [URL] [--config=path/to/config.json]
+
+Features:
+  - Direct page scraping with Puppeteer
+  - Automatic fallback to Wayback Machine for archived content
+  - Screenshot capture for firewall/paywall-protected pages
 
 Examples:
   # Use default config.json
@@ -99,6 +199,12 @@ Examples:
 Options:
   --config=PATH    Path to configuration file (default: config.json)
   --help, -h       Show this help message
+
+Firewall/Paywall Handling:
+  The tool automatically attempts multiple methods to get content:
+  1. Direct access - tries to fetch the page directly
+  2. Wayback Machine - fetches the most recent archived snapshot
+  3. Screenshot - captures a visual screenshot as last resort
 
 Configuration (config.json):
   {

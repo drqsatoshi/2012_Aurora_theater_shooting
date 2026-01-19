@@ -5,6 +5,14 @@ A universal tool for scraping and analyzing any Grokipedia or Wikipedia article 
 ## Purpose
 This repository contains tools for scraping and analyzing Grokipedia pages. The tool helps optimize pages for search engine ranking through comprehensive SEO analysis and crawler testing.
 
+## ✨ Key Features
+
+- **Multi-method Scraping**: Automatically tries direct access, Wayback Machine archives, and screenshot fallback
+- **Firewall/Paywall Workaround**: Works around access restrictions using archived data
+- **SEO Analysis**: Comprehensive analysis of page structure and optimization
+- **Universal**: Works with any Grokipedia or Wikipedia article
+- **AI Agent Ready**: Designed for automated use by AI tools
+
 ## Quick Start
 
 ### 1. Install Dependencies
@@ -48,6 +56,29 @@ This will:
 - Test crawler compatibility (Googlebot, Bingbot)
 - Generate comprehensive SEO report
 - Provide optimization recommendations
+
+## 🔥 Firewall & Paywall Workaround
+
+The tool automatically handles access restrictions with a three-tier approach:
+
+1. **Direct Access**: Tries to fetch the page normally
+2. **Wayback Machine**: Falls back to the most recent archived snapshot from archive.org
+3. **Screenshot Fallback**: Captures a visual screenshot if all else fails
+
+### Manual Wayback Machine Scraping
+
+Use the dedicated CLI tool to fetch archived content:
+
+```bash
+./wayback_scrape.sh https://grokipedia.com/page/ARTICLE_NAME
+./wayback_scrape.sh https://example.com/paywalled-article output.html
+```
+
+This is useful for:
+- Getting around corporate firewalls
+- Accessing paywalled content (archived versions)
+- Retrieving deleted or modified content
+- Ensuring consistent historical data
 
 ## Usage
 
@@ -199,7 +230,7 @@ This allows maximum flexibility for different use cases.
 ## Files
 
 ### Core Files
-- `scrape.js` - Puppeteer script to scrape any Grokipedia/Wikipedia page
+- `scrape.js` - Puppeteer script with automatic firewall/paywall workarounds
 - `scrape.html` - Template/output file for scraped content
 - `config.json` - Configuration file for article URL and settings
 - `package.json` - Node.js dependencies
@@ -207,7 +238,11 @@ This allows maximum flexibility for different use cases.
 ### SEO Tools
 - `SEO_CRAWLER_GUIDE.md` - Comprehensive SEO and crawler optimization guide
 - `seo_analyzer.sh` - Automated SEO analysis script (works with any URL)
+- `wayback_scrape.sh` - CLI tool for manual Wayback Machine scraping
 - `seo_reports/` - Generated SEO analysis reports (gitignored)
+
+### Testing
+- `test_tool.sh` - Test suite for verifying tool functionality
 
 ### Configuration
 - `.gitignore` - Excludes node_modules, reports, and temporary files
