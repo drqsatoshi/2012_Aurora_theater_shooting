@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 // Load configuration
 function loadConfig() {
@@ -23,7 +24,6 @@ function loadConfig() {
 
 // Get the latest Wayback Machine snapshot URL for a given URL
 async function getWaybackUrl(originalUrl) {
-  const https = require('https');
   const availabilityUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(originalUrl)}`;
   
   return new Promise((resolve, reject) => {
