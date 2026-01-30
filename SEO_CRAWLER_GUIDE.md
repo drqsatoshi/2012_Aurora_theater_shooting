@@ -1,6 +1,8 @@
 # SEO Optimization and Web Crawler Guide
 
-This guide provides command-line steps to improve search engine visibility and help the Grokipedia article rank on the first page alongside Wikipedia.
+This guide provides command-line steps to improve search engine visibility and help any Grokipedia article rank on the first page alongside Wikipedia.
+
+**Note:** Replace `YOUR_ARTICLE_URL` with your target article URL throughout this guide.
 
 ## Table of Contents
 1. [Generate robots.txt](#generate-robotstxt)
@@ -52,12 +54,15 @@ EOF
 Generate a sitemap for search engines:
 
 ```bash
-cat > sitemap.xml << 'EOF'
+# Using environment variable for your article URL
+ARTICLE_URL="https://grokipedia.com/page/YOUR_ARTICLE_NAME"
+
+cat > sitemap.xml << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://grokipedia.com/page/2012_Aurora_theater_shooting</loc>
-    <lastmod>YYYY-MM-DD</lastmod>
+    <loc>${ARTICLE_URL}</loc>
+    <lastmod>$(date +%Y-%m-%d)</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -65,22 +70,29 @@ cat > sitemap.xml << 'EOF'
 EOF
 ```
 
-**Note:** Update `YYYY-MM-DD` with the current date or use `$(date +%Y-%m-%d)` for dynamic generation.
+**Note:** The date is automatically set to today's date using `$(date +%Y-%m-%d)`.
 
 ---
 
 ## Test Search Engine Crawlers
+
+### Setting Your Article URL
+
+```bash
+# Set your article URL as an environment variable for easy reuse
+export ARTICLE_URL="https://grokipedia.com/page/YOUR_ARTICLE_NAME"
+```
 
 ### Simulate Googlebot Crawl
 
 ```bash
 # Fetch page as Googlebot
 curl -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting > googlebot_view.html
+  "$ARTICLE_URL" > googlebot_view.html
 
 # Check response headers
 curl -I -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting
+  "$ARTICLE_URL"
 ```
 
 ### Simulate Bingbot Crawl
@@ -88,7 +100,7 @@ curl -I -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.h
 ```bash
 # Fetch page as Bingbot
 curl -A "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting > bingbot_view.html
+  "$ARTICLE_URL" > bingbot_view.html
 ```
 
 ### Test Spider Crawl
@@ -96,11 +108,11 @@ curl -A "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)
 ```bash
 # Recursive spider crawl with wget (test only - be respectful of server resources)
 wget --spider -r -l 2 --user-agent="SEO-Spider/1.0" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting 2>&1 | tee spider_log.txt
+  "$ARTICLE_URL" 2>&1 | tee spider_log.txt
 
 # Alternative: Use curl to check link validity
 curl -I --user-agent="SEO-Spider/1.0" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting
+  "$ARTICLE_URL"
 ```
 
 ---
@@ -109,33 +121,35 @@ curl -I --user-agent="SEO-Spider/1.0" \
 
 ### Extract SEO-Critical Elements
 
+**Note:** Set `ARTICLE_URL` first with your target URL.
+
 ```bash
 # Extract title tag
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '(?<=<title>).*?(?=</title>)' | head -1
 
 # Extract meta description
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '<meta name="description" content="\K[^"]*' | head -1
 
 # Extract all H1 headings
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '(?<=<h1[^>]*>).*?(?=</h1>)'
 
 # Extract all H2 headings
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '(?<=<h2[^>]*>).*?(?=</h2>)'
 
 # Extract canonical URL
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '<link rel="canonical" href="\K[^"]*'
 
 # Count internal links
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '<a href="[^"]*"' | wc -l
 
 # Extract all image alt tags
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -oP '<img[^>]*alt="\K[^"]*'
 ```
 
@@ -143,7 +157,7 @@ curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
 
 ```bash
 # Extract JSON-LD structured data
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -Pzo '(?s)<script type="application/ld\+json">.*?</script>' | \
   sed 's/<script type="application\/ld+json">//; s/<\/script>//' > structured_data.json
 
@@ -160,22 +174,22 @@ cat structured_data.json | jq '.' > /dev/null && echo "Valid JSON-LD" || echo "I
 ```bash
 # Measure page load time
 time curl -o /dev/null -s -w "Time: %{time_total}s\nSize: %{size_download} bytes\n" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting
+  "$ARTICLE_URL"
 ```
 
 ### Analyze Content Quality
 
 ```bash
 # Word count (good for SEO ranking)
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   sed 's/<[^>]*>//g' | wc -w
 
-# Keyword density for "Aurora theater shooting"
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
-  sed 's/<[^>]*>//g' | grep -io "aurora theater shooting" | wc -l
+# Keyword density (customize keywords for your article)
+curl -s "$ARTICLE_URL" | \
+  sed 's/<[^>]*>//g' | grep -io "YOUR_KEYWORD_HERE" | wc -l
 
 # Check for duplicate content indicators
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -i "rel=\"canonical\""
 ```
 
@@ -184,10 +198,10 @@ curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
 ```bash
 # Fetch with mobile user agent
 curl -A "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting > mobile_view.html
+  "$ARTICLE_URL" > mobile_view.html
 
 # Check viewport meta tag
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -i "viewport"
 ```
 
@@ -198,7 +212,7 @@ curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
 ### Check robots.txt Compliance
 
 ```bash
-# Fetch and analyze robots.txt
+# Fetch and analyze robots.txt (adjust domain as needed)
 curl -s https://grokipedia.com/robots.txt
 
 # Verify sitemap location
@@ -209,22 +223,25 @@ curl -s https://grokipedia.com/sitemap.xml | head -20
 
 ```bash
 # Check HTTP status codes
-curl -I https://grokipedia.com/page/2012_Aurora_theater_shooting | grep "HTTP/"
+curl -I "$ARTICLE_URL" | grep "HTTP/"
 
 # Check for redirects
-curl -L -I https://grokipedia.com/page/2012_Aurora_theater_shooting 2>&1 | grep -E "HTTP/|Location:"
+curl -L -I "$ARTICLE_URL" 2>&1 | grep -E "HTTP/|Location:"
 
 # Check SSL/HTTPS security
-curl -I https://grokipedia.com/page/2012_Aurora_theater_shooting 2>&1 | grep -i "strict-transport"
+curl -I "$ARTICLE_URL" 2>&1 | grep -i "strict-transport"
 ```
 
 ### Generate Crawl Report
 
 ```bash
-# Create comprehensive crawl report
+# Create comprehensive crawl report for any article
 cat > crawl_report.sh << 'EOF'
 #!/bin/bash
-URL="https://grokipedia.com/page/2012_Aurora_theater_shooting"
+
+# Usage: ./crawl_report.sh YOUR_ARTICLE_URL
+
+URL="${1:-https://grokipedia.com/page/2012_Aurora_theater_shooting}"
 REPORT="crawl_report_$(date +%Y%m%d_%H%M%S).txt"
 
 echo "=== SEO Crawl Report ===" > $REPORT
@@ -264,7 +281,9 @@ cat $REPORT
 EOF
 
 chmod +x crawl_report.sh
-./crawl_report.sh
+
+# Run with your article URL
+./crawl_report.sh "$ARTICLE_URL"
 ```
 
 ---
@@ -306,23 +325,41 @@ chmod +x crawl_report.sh
 
 ## Quick Start Commands
 
+Set your article URL first:
+```bash
+export ARTICLE_URL="https://grokipedia.com/page/YOUR_ARTICLE_NAME"
+```
+
+Then run:
 ```bash
 # 1. Scrape current page
 npm run scrape
 
+# Or with specific URL:
+node scrape.js "$ARTICLE_URL"
+
 # 2. Generate crawl report
-./crawl_report.sh
+./crawl_report.sh "$ARTICLE_URL"
 
 # 3. Test as Googlebot
 curl -A "Mozilla/5.0 (compatible; Googlebot/2.1)" \
-  https://grokipedia.com/page/2012_Aurora_theater_shooting > googlebot_test.html
+  "$ARTICLE_URL" > googlebot_test.html
 
 # 4. Analyze SEO elements
-curl -s https://grokipedia.com/page/2012_Aurora_theater_shooting | \
+curl -s "$ARTICLE_URL" | \
   grep -E "<title>|<meta name=\"description\"|<h1" | head -10
 
 # 5. Check page speed
-time curl -o /dev/null -s https://grokipedia.com/page/2012_Aurora_theater_shooting
+time curl -o /dev/null -s "$ARTICLE_URL"
+```
+
+Or use the built-in SEO analyzer:
+```bash
+# Use config.json
+npm run analyze
+
+# Or specify URL directly
+./seo_analyzer.sh "$ARTICLE_URL"
 ```
 
 ---
